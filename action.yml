@@ -1,0 +1,40 @@
+name: Check self-hosted runner
+description: Fail the job unless a self-hosted runner carrying every given label is online.
+
+branding:
+  icon: server
+  color: green
+
+inputs:
+  labels:
+    description: Comma-separated labels the runner must carry. For example, `typhon,dandi`.
+    required: true
+  token:
+    description: >-
+      Token that can list the self-hosted runners of `scope`. The workflow's own `GITHUB_TOKEN` cannot,
+      so this is a personal access token. See the README.
+    required: true
+  scope:
+    description: Repository (`owner/repo`) or organization whose self-hosted runners are listed.
+    required: false
+    default: ${{ github.repository }}
+
+runs:
+  using: composite
+  steps:
+    - name: Check that a matching runner is online
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        SCOPE: ${{ inputs.scope }}
+        LABELS: ${{ inputs.labels }}
+      # A composite action does not enforce `required`, and an empty token would only surface as an API error.
+      run: |
+        [ -n "$GH_TOKEN" ] || { echo "::error::The token input must be set."; exit 1; }
+        [ -n "$LABELS" ] || { echo "::error::The labels input must be set."; exit 1; }
+        online=$(bash "$GITHUB_ACTION_PATH/check_runner.sh" "$SCOPE" "$LABELS")
+        if [ "$online" != "true" ]; then
+          echo "::error::No online self-hosted runner in $SCOPE carries the labels $LABELS."
+          exit 1
+        fi
+        echo "An online self-hosted runner in $SCOPE carries the labels $LABELS."
