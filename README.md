@@ -39,3 +39,10 @@ The workflow's own `GITHUB_TOKEN` cannot list self-hosted runners, so the action
 - **Runner registered to an organization.** A fine-grained token with the organization permission `Self-hosted runners: Read-only`.
 
 A classic token needs the `repo` scope for a repository, or `admin:org` for an organization.
+
+When creating a fine-grained token:
+
+- Set its resource owner to the account or organization that owns the repositories. A token whose owner is your personal account cannot see an organization's repositories.
+- One token can serve several repositories. Choose *Only select repositories*, pick every repository that runs the check, and store the same token as a secret in each.
+- An organization may block fine-grained tokens, or require an owner to approve each one. An owner allows them under the organization's **Settings → Personal access tokens**.
+- Fine-grained tokens expire. An expired token fails the job with "could not list the runners", so it is never mistaken for an offline runner. Renew it and update the secret.
